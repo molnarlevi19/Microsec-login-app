@@ -90,4 +90,55 @@ class RegistrationController extends Controller
     
         return response()->json(['source' => $source, 'users' => $users]);
     }
+
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        $validatedData = $request->validate([
+            'nickname' => 'sometimes|string|max:255',
+            'birthdate' => 'sometimes|date|before:today',
+            'password' => 'sometimes|min:8',
+        ]);
+
+        if (isset($validatedData['nickname'])) {
+            $user->nickname = $validatedData['nickname'];
+        }
+        if (isset($validatedData['birthdate'])) {
+            $user->birthdate = $validatedData['birthdate'];
+        }
+        if (isset($validatedData['password'])) {
+            $user->password = Hash::make($validatedData['password']);
+        }
+
+        $user->save();
+
+        $userFilePath = storage_path('app/private/users/users.csv');
+        if (file_exists($userFilePath)) {
+            $users = [];
+            if (($handle = fopen($userFilePath, 'r')) !== false) {
+                $header = fgetcsv($handle);
+                while (($data = fgetcsv($handle)) !== false) {
+
+                    if ($data[0] == $user->email) {
+                        $data[1] = $user->nickname;
+                        $data[2] = $user->birthdate;
+                        $data[3] = $user->password;
+                    }
+                    $users[] = $data;
+                }
+                fclose($handle);
+            }
+
+            $handle = fopen($userFilePath, 'w');
+            fputcsv($handle, ['email', 'nickname', 'birthdate', 'password']);
+            foreach ($users as $userData) {
+                fputcsv($handle, $userData);
+            }
+            fclose($handle);
+        }
+
+        return response()->json(['message' => 'Profile updated successfully', 'user' => $user]);
+    }
+    
 }
