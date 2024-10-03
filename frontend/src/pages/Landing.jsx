@@ -5,21 +5,38 @@ import UserInfoModal from './UserInfoModal';
 const Landing = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const [isFetched, setIsFetched] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
     const fetchUserData = async () => {
-      const response = await fetch('/api/user', {
+      const response = await fetch('/api/current-user', {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Authorization': `Bearer ${token}`,
         },
       });
-      const data = await response.json();
-      setUser(data);
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data);
+        setIsFetched(true); 
+
+      } else {
+        localStorage.removeItem('token');
+        navigate("/login");
+      }
     };
-    
-    fetchUserData();
-  }, []);
+
+    if (!isFetched) { 
+      fetchUserData();
+    }
+  }, [navigate, isFetched]); 
 
   const handleLogout = async () => {
     const logoutUrl = '/api/logout';
@@ -56,7 +73,7 @@ const Landing = () => {
       },
       body: JSON.stringify(updatedUserData),
     };
-  
+
     try {
       const response = await fetch(updateUrl, requestOptions);
       if (response.ok) {
@@ -76,18 +93,18 @@ const Landing = () => {
       {user && (
         <>
           <p>You are now logged in.</p>
-          <p>Nickname: {user.nickname}</p>
-          <p>Birthdate: {user.birthdate}</p>
           <button onClick={() => setIsModalOpen(true)}>Change User Information</button>
         </>
       )}
       <button onClick={handleLogout}>Logout</button>
-      <UserInfoModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        user={user} 
-        onUpdate={handleUpdateUser} 
-      />
+      {isModalOpen && user && (
+        <UserInfoModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          user={user}
+          onUpdate={handleUpdateUser}
+        />
+      )}
     </div>
   );
 };

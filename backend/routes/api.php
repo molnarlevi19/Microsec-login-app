@@ -10,6 +10,12 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/register', [RegistrationController::class, 'register']);
-Route::get('/users', [RegistrationController::class, 'retrieveData']);
+
+Route::group(['middleware' => 'auth:sanctum'], function () {
+    
+    Route::get('/current-user', [RegistrationController::class, 'retrieveData']);
+    Route::patch('/update-profile', [RegistrationController::class, 'updateProfile']);
+    Route::post('logout', [AuthController::class, 'logout']);
+});
 
 Route::post('/login', [AuthController::class, 'login'])->name('login');
