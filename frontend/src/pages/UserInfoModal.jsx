@@ -5,7 +5,7 @@ const UserInfoModal = ({ isOpen, onClose, user, onUpdate }) => {
 
   useEffect(() => {
     if (user) {
-      setFormData({ nickname: user.nickname, birthdate: user.birthdate, password: '' });
+      setFormData({ nickname: user.nickname || '', birthdate: user.birthdate || '', password: '' });
     }
   }, [user]);
 
@@ -32,7 +32,7 @@ const UserInfoModal = ({ isOpen, onClose, user, onUpdate }) => {
 
   if (!isOpen) return null;
 
-   return (
+  return (
     <div className="modal-overlay">
       <div className="modal-content">
         <h2>Update User Information</h2>
@@ -62,7 +62,7 @@ const UserInfoModal = ({ isOpen, onClose, user, onUpdate }) => {
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Leave empty to keep current password"
+              placeholder=""
             />
           </div>
           <button type="submit">Update</button>
